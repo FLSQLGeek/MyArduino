@@ -3,17 +3,16 @@
 
 #include <SPI.h>        // Include SPI library (needed for the SD card)
 #include <SD.h>         // Include SD library
-#include <DHT.h>        // Include DHT sensor library
- 
+#include "dht.h"
 File dataFile;
- 
-#define DHTPIN 4            // DHT11 data pin is connected to Arduino pin 4
-#define DHTTYPE DHT11       // DHT11 sensor is used
-DHT dht(DHTPIN, DHTTYPE);   // Initialize DHT library
+ dht DHT;
+#define DHTPIN A0            // DHT11 data pin is connected to Arduino pin 4
+
  
 void setup() {
   // Open serial communications and wait for port to open:
   Serial.begin(9600);
+   delay(5000); //Delay to let system boot
   while (!Serial)
     ; // wait for serial port to connect. Needed for native USB port only
   Serial.print("Initializing SD card...");
@@ -28,31 +27,32 @@ void setup() {
 uint16_t line = 1;
  
 void loop() {
-  delay(1000);
-  // Read humidity
-  byte RH = dht.readHumidity();
+DHT.read11(DHTPIN);
+   // Read humidity
+  int RH = DHT.humidity;
   //Read temperature in degree Celsius
-  byte Temp = dht.readTemperature();
+  int Temp = DHT.temperature;
   
   dataFile = SD.open("DHT11Log.txt", FILE_WRITE);
   
   // if the file opened okay, write to it:
+   delay(2000); 
   if (dataFile) {
     Serial.print(line);
     Serial.print(":    Temperature = ");
-    Serial.print(Temp);
-    Serial.print("°C,    Humidity = ");
+    Serial.print((DHT.temperature* 1.8000)+32);
+    Serial.print("°F,    Humidity = ");
     Serial.print(RH);
     Serial.println("%");
+    
     // Write data to SD card file (DHT11Log.txt)
     dataFile.print(line++);
     dataFile.print(":    Temperature = ");
-    dataFile.print(Temp);
+    dataFile.print((DHT.temperature* 1.8000)+32);
     dataFile.print("°C,    Humidity = ");
     dataFile.print(RH);
     dataFile.println("%");
-    dataFile.close();
-    
+    dataFile.close();  
   }
   // if the file didn't open, print an error:
   else
